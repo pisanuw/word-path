@@ -1,6 +1,6 @@
 import { toDisplay } from '../lib/wordGraph'
 
-export default function WordTiles({ word, prevWord, locale, variant }) {
+export default function WordTiles({ word, prevWord, locale, variant, hintPosition }) {
   const display = toDisplay(word, locale || 'en-US')
   let changedPos = -1
   if (prevWord && prevWord.length === word.length) {
@@ -17,7 +17,7 @@ export default function WordTiles({ word, prevWord, locale, variant }) {
       {display.split('').map((ch, i) => (
         <div
           key={i}
-          className={`tile ${i === changedPos ? 'tile-changed' : ''} ${variant ? `tile-${variant}` : ''}`}
+          className={`tile ${i === changedPos ? 'tile-changed' : ''} ${i === hintPosition ? 'tile-hint' : ''} ${variant ? `tile-${variant}` : ''}`}
         >
           {ch}
         </div>

@@ -9,6 +9,7 @@ import {
   toCanonical,
   shortestPath,
 } from '../lib/wordGraph'
+import { applyHintPenalty } from '../lib/hints'
 
 function climbSettingsForLevel(level) {
   const length = 3 + ((level - 1) % 5)
@@ -29,6 +30,8 @@ const initialState = {
   errorMessage: null,
   climb: { level: 1, totalScore: 0, roundsWon: 0 },
   lastRoundScore: null,
+  hintsUsed: 0,
+  hintPosition: null, // index of the letter a hint suggests changing next
 }
 
 export function useGameEngine() {
@@ -69,6 +72,8 @@ export function useGameEngine() {
           puzzle,
           path: [puzzle.start],
           errorMessage: null,
+          hintsUsed: 0,
+          hintPosition: null,
         }))
       } catch (err) {
         setState((s) => ({ ...s, status: 'error', errorMessage: err.message || 'Something went wrong loading the dictionary.' }))
@@ -122,7 +127,8 @@ export function useGameEngine() {
         const newPath = [...s.path, word]
 
         if (word === s.puzzle.end) {
-          const score = computeScore(s.puzzle.shortestLength, newPath.length - 1)
+          const rawScore = computeScore(s.puzzle.shortestLength, newPath.length - 1)
+          const score = applyHintPenalty(rawScore, s.hintsUsed)
           const nextClimb = {
             ...s.climb,
             totalScore: s.climb.totalScore + score,
@@ -135,14 +141,29 @@ export function useGameEngine() {
             errorMessage: null,
             lastRoundScore: score,
             climb: nextClimb,
+            hintPosition: null,
           }
         }
 
-        return { ...s, path: newPath, errorMessage: null }
+        return { ...s, path: newPath, errorMessage: null, hintPosition: null }
       })
     },
     [category, dictCache]
   )
+
+  const requestHint = useCallback(() => {
+    setState((s) => {
+      if (s.status !== 'playing' || !s.puzzle) return s
+      const entry = dictCache.get(`${s.categoryId}/${s.length}`)
+      if (!entry) return s
+      const current = s.path[s.path.length - 1]
+      const onward = shortestPath(entry.adj, current, s.puzzle.end)
+      if (!onward || onward.length < 2) return s
+      const { position } = isOneLetterApart(current, onward[1])
+      if (position === -1) return s
+      return { ...s, hintsUsed: s.hintsUsed + 1, hintPosition: position }
+    })
+  }, [dictCache])
 
   const clearError = useCallback(() => {
     setState((s) => ({ ...s, errorMessage: null }))
@@ -198,6 +219,7 @@ export function useGameEngine() {
       startFreePlay,
       startClimb,
       submitWord,
+      requestHint,
       clearError,
       playAgainFree,
       nextClimbRound,
@@ -206,6 +228,6 @@ export function useGameEngine() {
       goHome,
       climbSettingsForLevel,
     }),
-    [state, category, currentWord, movesUsed, shortestPathWords, startFreePlay, startClimb, submitWord, clearError, playAgainFree, nextClimbRound, endClimb, giveUp, goHome]
+    [state, category, currentWord, movesUsed, shortestPathWords, startFreePlay, startClimb, submitWord, requestHint, clearError, playAgainFree, nextClimbRound, endClimb, giveUp, goHome]
   )
 }

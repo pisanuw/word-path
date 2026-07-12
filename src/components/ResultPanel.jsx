@@ -10,6 +10,7 @@ export default function ResultPanel({
   movesUsed,
   shortestPathWords,
   score,
+  hintsUsed,
   mode,
   onPlayAgain,
   onNextRound,
@@ -28,6 +29,11 @@ export default function ResultPanel({
       <p className="muted" style={{ marginTop: 6 }}>
         {strings.moves}: {movesUsed} &middot; {strings.shortest_path}: {puzzle.shortestLength}
       </p>
+      {hintsUsed > 0 && (
+        <p className="muted" style={{ marginTop: 2, fontSize: '0.85rem' }}>
+          {strings.hintsUsedLabel}: {hintsUsed} ({hintsUsed * 10} pts)
+        </p>
+      )}
 
       <div className="path-compare">
         <h4>{strings.your_path}</h4>
@@ -62,6 +68,7 @@ export default function ResultPanel({
         moves={movesUsed}
         shortestMoves={puzzle.shortestLength}
         score={score}
+        hintsUsed={hintsUsed}
         startWord={puzzle.start}
         endWord={puzzle.end}
       />

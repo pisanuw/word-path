@@ -446,3 +446,42 @@
   color: var(--rope);
   font-family: var(--font-display);
 }
+
+/* --- Hints --- */
+.tile.tile-hint {
+  border-color: var(--sky);
+  box-shadow: 0 0 0 2px rgba(127, 184, 214, 0.35);
+  animation: hint-pulse 1.4s ease-in-out infinite;
+}
+
+.number-tile.hint {
+  border-color: var(--sky);
+  box-shadow: 0 0 0 2px rgba(127, 184, 214, 0.35);
+  animation: hint-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes hint-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(127, 184, 214, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(127, 184, 214, 0.15);
+  }
+}
+
+.hint-banner {
+  color: var(--sky);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+.hint-btn {
+  position: relative;
+}
+
+.hint-cost {
+  font-size: 0.7rem;
+  color: var(--cloud-dim);
+  font-family: var(--font-body);
+}

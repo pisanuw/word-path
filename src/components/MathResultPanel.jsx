@@ -8,6 +8,7 @@ export default function MathResultPanel({
   history,
   score,
   answerValue,
+  hintsUsed,
   mode,
   onPlayAgain,
   onNextRound,
@@ -27,6 +28,11 @@ export default function MathResultPanel({
         {strings.yourResult}: {answerValue} &middot; {strings.target}: {puzzle.target}
         {distance > 0 && ` \u00b7 ${strings.offBy} ${distance}`}
       </p>
+      {hintsUsed > 0 && (
+        <p className="muted" style={{ marginTop: 2, fontSize: '0.85rem' }}>
+          {strings.hintsUsedLabel}: {hintsUsed} ({hintsUsed * 10} pts)
+        </p>
+      )}
 
       {history.length > 0 && (
         <div className="path-compare">
@@ -66,6 +72,7 @@ export default function MathResultPanel({
         moves={history.length}
         shortestMoves={puzzle.bestDistance}
         score={score}
+        hintsUsed={hintsUsed}
         targetNumber={puzzle.target}
         resultNumber={answerValue}
       />

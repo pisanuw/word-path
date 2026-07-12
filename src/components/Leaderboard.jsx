@@ -79,6 +79,7 @@ export default function Leaderboard({ strings, uiLang, onGoHome }) {
                   <th>{uiLang === 'tr' ? 'Oyuncu' : 'Player'}</th>
                   <th>{strings.score}</th>
                   <th>{game === 'words' ? strings.moves : strings.steps}</th>
+                  <th>💡</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,6 +89,7 @@ export default function Leaderboard({ strings, uiLang, onGoHome }) {
                     <td>{r.player_name}</td>
                     <td>{r.score}</td>
                     <td>{r.moves}</td>
+                    <td className="muted">{r.hints_used || 0}</td>
                   </tr>
                 ))}
               </tbody>

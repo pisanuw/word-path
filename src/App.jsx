@@ -50,6 +50,7 @@ export default function App() {
         history={math.state.history}
         score={math.state.lastRoundScore}
         answerValue={math.state.lastAnswerValue}
+        hintsUsed={math.state.hintsUsed}
         mode={math.state.mode}
         onPlayAgain={math.playAgainFree}
         onNextRound={math.nextClimbRound}
@@ -67,12 +68,15 @@ export default function App() {
         history={math.state.history}
         selection={math.state.selection}
         errorMessage={math.state.errorMessage}
+        hintsUsed={math.state.hintsUsed}
+        hintTileIds={math.state.hintTileIds}
         mode={math.state.mode}
         climb={math.state.climb}
         onTapTile={math.tapTile}
         onSelectOp={math.selectOp}
         onSubmitAnswer={math.submitAnswer}
         onResetPool={math.resetPool}
+        onRequestHint={math.requestHint}
         onGiveUp={math.giveUp}
         onClearError={math.clearError}
       />
@@ -99,6 +103,7 @@ export default function App() {
         movesUsed={word.movesUsed}
         shortestPathWords={word.shortestPathWords}
         score={word.state.lastRoundScore}
+        hintsUsed={word.state.hintsUsed}
         mode={word.state.mode}
         onPlayAgain={word.playAgainFree}
         onNextRound={word.nextClimbRound}
@@ -124,8 +129,11 @@ export default function App() {
           path={word.state.path}
           movesUsed={word.movesUsed}
           errorMessage={word.state.errorMessage}
+          hintsUsed={word.state.hintsUsed}
+          hintPosition={word.state.hintPosition}
           onSubmit={word.submitWord}
           onGiveUp={word.giveUp}
+          onRequestHint={word.requestHint}
           onClearError={word.clearError}
           mode={word.state.mode}
           climb={word.state.climb}

@@ -17,6 +17,14 @@ Both games share the same two modes:
 - **Climb Mode** -- an open-ended run where difficulty increases each round
   until you choose to stop.
 
+Both also share a **Hint** button (`src/lib/hints.js`): a nudge, not the
+answer -- Word Ladder points at which letter position to change next (not
+what to change it to), Number Ladder highlights which two numbers to
+combine next (not the operator or result). Each hint costs a flat 10 points
+off that round's score, floored at 0, so heavy hint use is self-limiting
+rather than needing a hard cap on hint count. Hints used are stored with
+the leaderboard entry (`hints_used`) so it's visible alongside the score.
+
 ## Stack
 
 - React + Vite, no backend required to play.
@@ -94,8 +102,8 @@ existed.
 
 1. Create a free Supabase project.
 2. In the SQL editor, run `supabase/schema.sql`, then
-   `supabase/002_add_math_game.sql` (adds Number Ladder support to the same
-   table).
+   `supabase/002_add_math_game.sql`, then `supabase/003_add_hints.sql` (each
+   adds columns to the same `leaderboard` table).
 3. Copy `.env.example` to `.env.local` and fill in your project URL and
    publishable/anon key (Project Settings -> API in Supabase).
 4. Restart `npm run dev`.
@@ -140,4 +148,5 @@ src/
 supabase/
   schema.sql              leaderboard table + RLS policies (run first)
   002_add_math_game.sql   adds Number Ladder columns (run second)
+  003_add_hints.sql       adds hints_used column (run third)
 ```

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { generateMathPuzzle, COUNT_OPTIONS } from '../lib/mathPuzzle'
-import { applyOperator, opSymbolDisplay, computeScore } from '../lib/mathSolver'
+import { applyOperator, opSymbolDisplay, computeScore, solveWithFirstStep } from '../lib/mathSolver'
+import { applyHintPenalty } from '../lib/hints'
 
 let idCounter = 0
 function nextId() {
@@ -32,6 +33,8 @@ const initialState = {
   climb: { level: 1, totalScore: 0, roundsWon: 0 },
   lastRoundScore: null,
   lastAnswerValue: null,
+  hintsUsed: 0,
+  hintTileIds: [], // 1-2 tile ids the current hint is nudging toward
 }
 
 export function useMathGameEngine() {
@@ -53,6 +56,8 @@ export function useMathGameEngine() {
       history: [],
       selection: { tileId: null, op: null },
       errorMessage: null,
+      hintsUsed: 0,
+      hintTileIds: [],
     }))
   }, [])
 
@@ -71,7 +76,8 @@ export function useMathGameEngine() {
 
   const finishRoundWith = useCallback((s, value) => {
     const distance = Math.abs(value - s.puzzle.target)
-    const score = computeScore(distance, s.puzzle.target)
+    const rawScore = computeScore(distance, s.puzzle.target)
+    const score = applyHintPenalty(rawScore, s.hintsUsed)
     const nextClimb = {
       ...s.climb,
       totalScore: s.climb.totalScore + score,
@@ -92,15 +98,16 @@ export function useMathGameEngine() {
       setState((s) => {
         if (s.status !== 'playing') return s
         const { tileId, op } = s.selection
+        const clearedHint = s.hintTileIds.length ? { hintTileIds: [] } : null
 
         if (!tileId) {
-          return { ...s, selection: { tileId: id, op: null }, errorMessage: null }
+          return { ...s, ...clearedHint, selection: { tileId: id, op: null }, errorMessage: null }
         }
         if (!op) {
-          return { ...s, selection: { tileId: id === tileId ? null : id, op: null }, errorMessage: null }
+          return { ...s, ...clearedHint, selection: { tileId: id === tileId ? null : id, op: null }, errorMessage: null }
         }
         if (id === tileId) {
-          return { ...s, selection: { tileId, op: null } }
+          return { ...s, ...clearedHint, selection: { tileId, op: null } }
         }
 
         const a = s.pool.find((t) => t.id === tileId)
@@ -111,6 +118,7 @@ export function useMathGameEngine() {
         if (result === null) {
           return {
             ...s,
+            ...clearedHint,
             errorMessage: 'That doesn\u2019t give a whole positive number \u2014 try a different move.',
             selection: { tileId: null, op: null },
           }
@@ -121,10 +129,10 @@ export function useMathGameEngine() {
         const newHistory = [...s.history, { aValue: a.value, bValue: b.value, op, result }]
 
         if (result === s.puzzle.target) {
-          return finishRoundWith({ ...s, pool: newPool, history: newHistory }, result)
+          return finishRoundWith({ ...s, pool: newPool, history: newHistory, hintTileIds: [] }, result)
         }
 
-        return { ...s, pool: newPool, history: newHistory, selection: { tileId: null, op: null }, errorMessage: null }
+        return { ...s, pool: newPool, history: newHistory, selection: { tileId: null, op: null }, errorMessage: null, hintTileIds: [] }
       })
     },
     [finishRoundWith]
@@ -155,7 +163,31 @@ export function useMathGameEngine() {
         history: [],
         selection: { tileId: null, op: null },
         errorMessage: null,
+        hintTileIds: [],
       }
+    })
+  }, [])
+
+  const requestHint = useCallback(() => {
+    setState((s) => {
+      if (s.status !== 'playing' || !s.puzzle) return s
+      const best = solveWithFirstStep(
+        s.pool.map((t) => t.value),
+        s.puzzle.target
+      )
+      if (best.firstMove) {
+        const { aValue, bValue } = best.firstMove
+        const tileA = s.pool.find((t) => t.value === aValue)
+        const tileB = s.pool.find((t) => t.value === bValue && t.id !== tileA?.id)
+        if (!tileA || !tileB) return s
+        return { ...s, hintsUsed: s.hintsUsed + 1, hintTileIds: [tileA.id, tileB.id] }
+      }
+      if (best.value !== null) {
+        const tile = s.pool.find((t) => t.value === best.value)
+        if (!tile) return s
+        return { ...s, hintsUsed: s.hintsUsed + 1, hintTileIds: [tile.id] }
+      }
+      return s
     })
   }, [])
 
@@ -198,6 +230,7 @@ export function useMathGameEngine() {
       selectOp,
       submitAnswer,
       resetPool,
+      requestHint,
       clearError,
       playAgainFree,
       nextClimbRound,
@@ -206,6 +239,6 @@ export function useMathGameEngine() {
       goHome,
       opSymbolDisplay,
     }),
-    [state, startFreePlay, startClimb, tapTile, selectOp, submitAnswer, resetPool, clearError, playAgainFree, nextClimbRound, endClimb, giveUp, goHome]
+    [state, startFreePlay, startClimb, tapTile, selectOp, submitAnswer, resetPool, requestHint, clearError, playAgainFree, nextClimbRound, endClimb, giveUp, goHome]
   )
 }

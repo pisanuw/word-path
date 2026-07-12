@@ -112,3 +112,44 @@ export function computeScore(distance, target) {
   const accuracy = 100 * (1 - distance / Math.max(target, 1))
   return Math.max(0, Math.min(100, Math.round(accuracy)))
 }
+
+// Like solveClosest, but also reports the first move (the pair + operator)
+// that leads to the best outcome found. Used for hints: "combine these two
+// numbers next" without giving away the operator or the result.
+export function solveWithFirstStep(numbers, target, { maxStates = 200000 } = {}) {
+  const memo = new Set()
+  let best = { distance: Infinity, value: null, expr: null, firstMove: null }
+  let statesVisited = 0
+
+  function consider(value, expr, firstMove) {
+    const d = Math.abs(value - target)
+    if (d < best.distance) best = { distance: d, value, expr, firstMove }
+  }
+
+  function recurse(nums, exprs, firstMove) {
+    if (statesVisited >= maxStates) return
+    const key = [...nums].sort((a, b) => a - b).join(',')
+    if (memo.has(key)) return
+    memo.add(key)
+    statesVisited++
+
+    for (let i = 0; i < nums.length; i++) consider(nums[i], exprs[i], firstMove)
+    if (best.distance === 0) return
+    if (nums.length < 2) return
+
+    for (let i = 0; i < nums.length && statesVisited < maxStates; i++) {
+      for (let j = i + 1; j < nums.length && statesVisited < maxStates; j++) {
+        const rest = nums.filter((_, idx) => idx !== i && idx !== j)
+        const restExprs = exprs.filter((_, idx) => idx !== i && idx !== j)
+        for (const { value, expr } of candidateResults(nums[i], nums[j], exprs[i], exprs[j])) {
+          const thisMove = firstMove || { aValue: nums[i], bValue: nums[j] }
+          recurse([...rest, value], [...restExprs, expr], thisMove)
+          if (best.distance === 0 || statesVisited >= maxStates) break
+        }
+      }
+    }
+  }
+
+  recurse(numbers, numbers.map(String), null)
+  return best
+}

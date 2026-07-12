@@ -54,6 +54,14 @@ export const STRINGS = {
     bestPossible: 'Best possible',
     yourResult: 'Your result',
     changeGame: '\u2190 Choose a different game',
+
+    // Hints
+    hint: 'Hint',
+    hintCost: '\u221210 pts',
+    hintsUsedLabel: 'Hints used',
+    changeLetterHint: (position) => `Hint: try changing letter #${position + 1}`,
+    combineHint: 'Hint: try combining these two \u2192',
+    bestTileHint: 'Hint: this number is already your best bet',
   },
   tr: {
     tagline: 'Başlangıç kelimesinden hedef kelimeye ulaşmak için her seferinde bir harf değiştir. Az hamle, yüksek puan demektir.',
@@ -110,6 +118,14 @@ export const STRINGS = {
     bestPossible: 'En iyi olası',
     yourResult: 'Senin sonucun',
     changeGame: '\u2190 Farklı bir oyun seç',
+
+    // Hints
+    hint: '\u0130pucu',
+    hintCost: '\u221210 puan',
+    hintsUsedLabel: 'Kullanılan ipucu',
+    changeLetterHint: (position) => `\u0130pucu: ${position + 1}. harfi değiştirmeyi dene`,
+    combineHint: '\u0130pucu: bu ikisini birleştirmeyi dene \u2192',
+    bestTileHint: '\u0130pucu: bu sayı zaten en iyi seçenek',
   },
 }
 

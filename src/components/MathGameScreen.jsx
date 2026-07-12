@@ -10,12 +10,15 @@ export default function MathGameScreen({
   history,
   selection,
   errorMessage,
+  hintsUsed,
+  hintTileIds,
   mode,
   climb,
   onTapTile,
   onSelectOp,
   onSubmitAnswer,
   onResetPool,
+  onRequestHint,
   onGiveUp,
   onClearError,
 }) {
@@ -58,10 +61,11 @@ export default function MathGameScreen({
       <div className="number-pool">
         {pool.map((tile) => {
           const isSelected = selection.tileId === tile.id
+          const isHint = hintTileIds.includes(tile.id)
           return (
             <button
               key={tile.id}
-              className={`number-tile ${isSelected ? 'selected' : ''}`}
+              className={`number-tile ${isSelected ? 'selected' : ''} ${isHint ? 'hint' : ''}`}
               onClick={() => onTapTile(tile.id)}
             >
               {tile.value}
@@ -83,6 +87,12 @@ export default function MathGameScreen({
         ))}
       </div>
 
+      {hintTileIds.length > 0 && (
+        <p className="hint-banner text-center">
+          {hintTileIds.length === 2 ? strings.combineHint : strings.bestTileHint}
+        </p>
+      )}
+
       {errorMessage && <div className="error-banner">{errorMessage}</div>}
 
       <div className="row" style={{ marginTop: 22, justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -92,10 +102,18 @@ export default function MathGameScreen({
         <button className="btn btn-ghost" onClick={onResetPool}>
           {strings.resetNumbers}
         </button>
+        <button className="btn btn-ghost hint-btn" onClick={onRequestHint}>
+          💡 {strings.hint} <span className="hint-cost">{strings.hintCost}</span>
+        </button>
         <button className="btn btn-danger" onClick={onGiveUp}>
           {mode === 'climb' ? strings.finish_run : strings.give_up}
         </button>
       </div>
+      {hintsUsed > 0 && (
+        <p className="muted text-center" style={{ marginTop: 10, fontSize: '0.8rem' }}>
+          {strings.hintsUsedLabel}: {hintsUsed}
+        </p>
+      )}
     </div>
   )
 }
