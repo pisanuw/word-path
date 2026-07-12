@@ -55,7 +55,8 @@ export default function ResultPanel({
 
       <SaveScoreForm
         strings={strings}
-        category={category}
+        game="words"
+        categoryId={category?.id}
         wordLength={length}
         mode={mode}
         moves={movesUsed}

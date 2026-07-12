@@ -3,6 +3,7 @@ import { CATEGORIES } from '../config/categories'
 import { fetchLeaderboard, supabaseEnabled } from '../lib/supabaseClient'
 
 export default function Leaderboard({ strings, uiLang, onGoHome }) {
+  const [game, setGame] = useState('words') // 'words' | 'numbers'
   const [categoryId, setCategoryId] = useState('')
   const [rows, setRows] = useState([])
   const [status, setStatus] = useState('idle')
@@ -12,13 +13,13 @@ export default function Leaderboard({ strings, uiLang, onGoHome }) {
   useEffect(() => {
     if (!supabaseEnabled) return
     setStatus('loading')
-    fetchLeaderboard({ category: categoryId || undefined })
+    fetchLeaderboard({ game, category: game === 'words' ? categoryId || undefined : undefined })
       .then((data) => {
         setRows(data)
         setStatus('idle')
       })
       .catch(() => setStatus('error'))
-  }, [categoryId])
+  }, [game, categoryId])
 
   return (
     <div className="leaderboard-screen container">
@@ -31,19 +32,36 @@ export default function Leaderboard({ strings, uiLang, onGoHome }) {
       ) : (
         <>
           <div className="chip-row" style={{ marginTop: 16 }}>
-            <button className={`chip ${categoryId === '' ? 'selected' : ''}`} onClick={() => setCategoryId('')}>
-              All
+            <button
+              className={`chip ${game === 'words' ? 'selected' : ''}`}
+              onClick={() => {
+                setGame('words')
+                setCategoryId('')
+              }}
+            >
+              {strings.wordLadder}
             </button>
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                className={`chip accent-${cat.accent} ${categoryId === cat.id ? 'selected' : ''}`}
-                onClick={() => setCategoryId(cat.id)}
-              >
-                {categoryLabel(cat)}
-              </button>
-            ))}
+            <button className={`chip ${game === 'numbers' ? 'selected' : ''}`} onClick={() => setGame('numbers')}>
+              {strings.numberLadder}
+            </button>
           </div>
+
+          {game === 'words' && (
+            <div className="chip-row" style={{ marginTop: 10 }}>
+              <button className={`chip ${categoryId === '' ? 'selected' : ''}`} onClick={() => setCategoryId('')}>
+                All
+              </button>
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`chip accent-${cat.accent} ${categoryId === cat.id ? 'selected' : ''}`}
+                  onClick={() => setCategoryId(cat.id)}
+                >
+                  {categoryLabel(cat)}
+                </button>
+              ))}
+            </div>
+          )}
 
           {status === 'loading' && <p className="muted" style={{ marginTop: 20 }}>{strings.loading}</p>}
 
@@ -60,7 +78,7 @@ export default function Leaderboard({ strings, uiLang, onGoHome }) {
                   <th>#</th>
                   <th>{uiLang === 'tr' ? 'Oyuncu' : 'Player'}</th>
                   <th>{strings.score}</th>
-                  <th>{strings.moves}</th>
+                  <th>{game === 'words' ? strings.moves : strings.steps}</th>
                 </tr>
               </thead>
               <tbody>

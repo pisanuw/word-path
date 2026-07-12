@@ -4,8 +4,12 @@ import Home from './components/Home'
 import GameScreen from './components/GameScreen'
 import ResultPanel from './components/ResultPanel'
 import ClimbSummary from './components/ClimbSummary'
+import MathGameScreen from './components/MathGameScreen'
+import MathResultPanel from './components/MathResultPanel'
+import MathClimbSummary from './components/MathClimbSummary'
 import Leaderboard from './components/Leaderboard'
 import { useGameEngine } from './hooks/useGameEngine'
+import { useMathGameEngine } from './hooks/useMathGameEngine'
 import { useStrings } from './lib/i18n'
 
 export default function App() {
@@ -13,68 +17,98 @@ export default function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const strings = useStrings(uiLang)
 
-  const {
-    state,
-    category,
-    movesUsed,
-    shortestPathWords,
-    startFreePlay,
-    startClimb,
-    submitWord,
-    clearError,
-    playAgainFree,
-    nextClimbRound,
-    endClimb,
-    giveUp,
-    goHome,
-  } = useGameEngine()
+  const word = useGameEngine()
+  const math = useMathGameEngine()
 
   const handleGoHome = () => {
     setShowLeaderboard(false)
-    goHome()
+    word.goHome()
+    math.goHome()
   }
 
-  const handleRestartClimb = () => {
-    if (!state.categoryId) return
-    startClimb(state.categoryId)
-  }
+  const handleRestartMathClimb = () => math.startClimb()
 
   let body
 
   if (showLeaderboard) {
     body = <Leaderboard strings={strings} uiLang={uiLang} onGoHome={() => setShowLeaderboard(false)} />
-  } else if (state.screen === 'climb-summary') {
+  } else if (math.state.screen === 'climb-summary') {
+    body = (
+      <MathClimbSummary
+        strings={strings}
+        climb={math.state.climb}
+        onGoHome={handleGoHome}
+        onOpenLeaderboard={() => setShowLeaderboard(true)}
+        onRestart={handleRestartMathClimb}
+      />
+    )
+  } else if (math.state.screen === 'play' && math.state.status === 'won') {
+    body = (
+      <MathResultPanel
+        strings={strings}
+        puzzle={math.state.puzzle}
+        history={math.state.history}
+        score={math.state.lastRoundScore}
+        answerValue={math.state.lastAnswerValue}
+        mode={math.state.mode}
+        onPlayAgain={math.playAgainFree}
+        onNextRound={math.nextClimbRound}
+        onFinishRun={math.endClimb}
+        onGoHome={handleGoHome}
+        onOpenLeaderboard={() => setShowLeaderboard(true)}
+      />
+    )
+  } else if (math.state.screen === 'play' && math.state.status === 'playing' && math.state.puzzle) {
+    body = (
+      <MathGameScreen
+        strings={strings}
+        puzzle={math.state.puzzle}
+        pool={math.state.pool}
+        history={math.state.history}
+        selection={math.state.selection}
+        errorMessage={math.state.errorMessage}
+        mode={math.state.mode}
+        climb={math.state.climb}
+        onTapTile={math.tapTile}
+        onSelectOp={math.selectOp}
+        onSubmitAnswer={math.submitAnswer}
+        onResetPool={math.resetPool}
+        onGiveUp={math.giveUp}
+        onClearError={math.clearError}
+      />
+    )
+  } else if (word.state.screen === 'climb-summary') {
     body = (
       <ClimbSummary
         strings={strings}
-        category={category}
-        climb={state.climb}
+        category={word.category}
+        climb={word.state.climb}
         onGoHome={handleGoHome}
         onOpenLeaderboard={() => setShowLeaderboard(true)}
-        onRestart={handleRestartClimb}
+        onRestart={() => word.startClimb(word.state.categoryId)}
       />
     )
-  } else if (state.screen === 'play' && state.status === 'won') {
+  } else if (word.state.screen === 'play' && word.state.status === 'won') {
     body = (
       <ResultPanel
         strings={strings}
-        category={category}
-        length={state.length}
-        puzzle={state.puzzle}
-        path={state.path}
-        movesUsed={movesUsed}
-        shortestPathWords={shortestPathWords}
-        score={state.lastRoundScore}
-        mode={state.mode}
-        onPlayAgain={playAgainFree}
-        onNextRound={nextClimbRound}
-        onFinishRun={endClimb}
+        category={word.category}
+        length={word.state.length}
+        puzzle={word.state.puzzle}
+        path={word.state.path}
+        movesUsed={word.movesUsed}
+        shortestPathWords={word.shortestPathWords}
+        score={word.state.lastRoundScore}
+        mode={word.state.mode}
+        onPlayAgain={word.playAgainFree}
+        onNextRound={word.nextClimbRound}
+        onFinishRun={word.endClimb}
         onGoHome={handleGoHome}
         onOpenLeaderboard={() => setShowLeaderboard(true)}
       />
     )
-  } else if (state.screen === 'play' && (state.status === 'playing' || state.status === 'loading')) {
-    if (state.status === 'loading' || !state.puzzle) {
+  } else if (word.state.screen === 'play' && (word.state.status === 'playing' || word.state.status === 'loading')) {
+    if (word.state.status === 'loading' || !word.state.puzzle) {
       body = (
         <div className="container text-center" style={{ paddingTop: 60 }}>
           <p className="muted">{strings.loading}</p>
@@ -84,24 +118,24 @@ export default function App() {
       body = (
         <GameScreen
           strings={strings}
-          category={category}
-          length={state.length}
-          puzzle={state.puzzle}
-          path={state.path}
-          movesUsed={movesUsed}
-          errorMessage={state.errorMessage}
-          onSubmit={submitWord}
-          onGiveUp={giveUp}
-          onClearError={clearError}
-          mode={state.mode}
-          climb={state.climb}
+          category={word.category}
+          length={word.state.length}
+          puzzle={word.state.puzzle}
+          path={word.state.path}
+          movesUsed={word.movesUsed}
+          errorMessage={word.state.errorMessage}
+          onSubmit={word.submitWord}
+          onGiveUp={word.giveUp}
+          onClearError={word.clearError}
+          mode={word.state.mode}
+          climb={word.state.climb}
         />
       )
     }
-  } else if (state.status === 'error') {
+  } else if (word.state.status === 'error' || math.state.status === 'error') {
     body = (
       <div className="container text-center" style={{ paddingTop: 60 }}>
-        <p className="error-banner">{state.errorMessage}</p>
+        <p className="error-banner">{word.state.errorMessage || math.state.errorMessage}</p>
         <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={handleGoHome}>
           {strings.back_home}
         </button>
@@ -112,8 +146,10 @@ export default function App() {
       <Home
         strings={strings}
         uiLang={uiLang}
-        onStartFree={startFreePlay}
-        onStartClimb={startClimb}
+        onStartWordFree={word.startFreePlay}
+        onStartWordClimb={word.startClimb}
+        onStartMathFree={math.startFreePlay}
+        onStartMathClimb={math.startClimb}
       />
     )
   }
@@ -123,7 +159,7 @@ export default function App() {
       <header className="header">
         <button className="wordmark" onClick={handleGoHome}>
           <span className="wordmark-icon">🪜</span>
-          Word Ladder
+          Ladder Games
         </button>
         <div className="header-actions">
           <button className="btn btn-ghost" onClick={() => setShowLeaderboard(true)} style={{ padding: '8px 14px', fontSize: '0.85rem' }}>
@@ -142,7 +178,7 @@ export default function App() {
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>{body}</main>
 
-      <footer className="footer-note">Word Ladder · Kelime Merdiveni</footer>
+      <footer className="footer-note">Word Ladder &amp; Number Ladder · Kelime ve Sayı Merdiveni</footer>
     </div>
   )
 }

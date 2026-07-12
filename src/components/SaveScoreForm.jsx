@@ -1,7 +1,20 @@
 import { useState } from 'react'
 import { submitScore, supabaseEnabled } from '../lib/supabaseClient'
 
-export default function SaveScoreForm({ strings, category, wordLength, mode, moves, shortestMoves, score, startWord, endWord }) {
+export default function SaveScoreForm({
+  strings,
+  game = 'words',
+  categoryId,
+  wordLength,
+  mode,
+  moves,
+  shortestMoves,
+  score,
+  startWord,
+  endWord,
+  targetNumber,
+  resultNumber,
+}) {
   const [name, setName] = useState('')
   const [status, setStatus] = useState('idle') // idle | saving | saved | error
 
@@ -14,7 +27,8 @@ export default function SaveScoreForm({ strings, category, wordLength, mode, mov
     try {
       await submitScore({
         playerName: name.trim(),
-        category: category.id,
+        game,
+        category: categoryId,
         wordLength,
         mode,
         moves,
@@ -22,6 +36,8 @@ export default function SaveScoreForm({ strings, category, wordLength, mode, mov
         score,
         startWord,
         endWord,
+        targetNumber,
+        resultNumber,
       })
       setStatus('saved')
     } catch (err) {

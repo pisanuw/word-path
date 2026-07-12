@@ -10,13 +10,27 @@ export const supabase = supabaseEnabled ? createClient(url, anonKey) : null
 // Submits a completed round to the public leaderboard. No-ops (resolving to
 // null) when Supabase hasn't been configured, so the game is fully playable
 // without a backend.
-export async function submitScore({ playerName, category, wordLength, mode, moves, shortestMoves, score, startWord, endWord }) {
+export async function submitScore({
+  playerName,
+  game = 'words',
+  category,
+  wordLength,
+  mode,
+  moves,
+  shortestMoves,
+  score,
+  startWord,
+  endWord,
+  targetNumber,
+  resultNumber,
+}) {
   if (!supabaseEnabled) return null
   const { data, error } = await supabase
     .from('leaderboard')
     .insert({
       player_name: playerName.slice(0, 20),
-      category,
+      game,
+      category: category ?? 'math',
       word_length: wordLength,
       mode,
       moves,
@@ -24,6 +38,8 @@ export async function submitScore({ playerName, category, wordLength, mode, move
       score,
       start_word: startWord,
       end_word: endWord,
+      target_number: targetNumber,
+      result_number: resultNumber,
     })
     .select()
     .single()
@@ -31,7 +47,7 @@ export async function submitScore({ playerName, category, wordLength, mode, move
   return data
 }
 
-export async function fetchLeaderboard({ category, wordLength, mode, limit = 20 } = {}) {
+export async function fetchLeaderboard({ game, category, wordLength, mode, limit = 20 } = {}) {
   if (!supabaseEnabled) return []
   let query = supabase
     .from('leaderboard')
@@ -39,6 +55,7 @@ export async function fetchLeaderboard({ category, wordLength, mode, limit = 20 
     .order('score', { ascending: false })
     .order('moves', { ascending: true })
     .limit(limit)
+  if (game) query = query.eq('game', game)
   if (category) query = query.eq('category', category)
   if (wordLength) query = query.eq('word_length', wordLength)
   if (mode) query = query.eq('mode', mode)

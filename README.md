@@ -1,14 +1,21 @@
-# Word Ladder · Kelime Merdiveni
+# Ladder Games · Merdiven Oyunları
 
-A word-ladder game: change one letter at a time to climb from a start word to
-a target word. Score is based on how close your path is to the shortest
-possible path. Four dictionaries: English words, Turkish words, English
-names, Turkish names -- built to be easy to extend with more.
+Two puzzle games, one app:
 
-Two modes:
-- **Free Play** -- pick a dictionary and a word length (3-7), then climb.
-- **Climb Mode** -- an open-ended run where each win raises the difficulty
-  (longer words, then longer required paths) until you choose to stop.
+- **Word Ladder** -- change one letter at a time to climb from a start word
+  to a target word. Score is based on how close your path is to the
+  shortest possible path. Four dictionaries: English words, Turkish words,
+  English names, Turkish names -- built to be easy to extend with more.
+- **Number Ladder** -- given a set of numbers, combine them with
+  `+ − × ÷ ^` (tap two numbers, then an operator, repeat) to hit a target
+  number, or get as close as you can. Classic "Countdown numbers game"
+  rules: use some or all of the numbers, each at most once.
+
+Both games share the same two modes:
+- **Free Play** -- pick your settings (dictionary/length, or number
+  count/range), then play a single round.
+- **Climb Mode** -- an open-ended run where difficulty increases each round
+  until you choose to stop.
 
 ## Stack
 
@@ -23,15 +30,14 @@ npm install
 npm run dev
 ```
 
-## Dictionaries
+## Word Ladder dictionaries
 
 Word lists live in `src/data/<category>/<length>.json` (lengths 3-7). Each
 file contains **only words that are guaranteed reachable from every other
 word in that file** -- they're the largest connected component of the
 one-letter-change graph for that category/length, so puzzle generation can
 never hand out an unsolvable pair. See `src/lib/wordGraph.js` for the BFS /
-adjacency logic, and the data-processing notes below if you want to
-regenerate or extend the lists.
+adjacency logic.
 
 Current sources (all public word/name lists, filtered and deduplicated):
 - English words: Google's 10k common-English list, topped up with the dwyl
@@ -43,39 +49,64 @@ Current sources (all public word/name lists, filtered and deduplicated):
 - Turkish names: a public Turkish given-names list (~9.7k names).
 
 `scripts/build_dictionaries.py` regenerates everything in `src/data/` from
-raw source lists (see `scripts/sources.md` for exactly which files to
-download and from where). To add a new category (a themed word list,
-another language, etc.):
+raw source lists (see `scripts/sources.md`). To add a new category:
 1. Add your raw word/name list under `scripts/raw/`.
 2. Extend `build_dictionaries.py` with a `clean_pool()` + `save()` call for
    it, following the existing four as a template.
 3. Re-run the script -- it extracts the largest connected component per
-   length so every puzzle is solvable (that's the important part: an
-   arbitrary word list will have many isolated words with no valid
-   one-letter neighbor, which is exactly what breaks puzzle generation).
+   length so every puzzle is solvable.
 4. Add an entry to `src/config/categories.js`.
 
 Small print: `en_names` and `tr_names` are thin at length 7 (22 and 44 names
-respectively) since public first-name lists skew short -- more than enough
-to work, just less variety at that specific length. Worth revisiting if you
-add a bigger name source later.
+respectively) since public first-name lists skew short -- still playable,
+just less variety at that specific length.
+
+## Number Ladder rules
+
+Implemented in `src/lib/mathSolver.js`, kept deliberately unambiguous so
+there's never a confusing "wrong order" failure:
+- **+** and **×**: order doesn't matter.
+- **−**: always `|a - b|` (never negative, never zero -- a zero result is
+  rejected since it's a dead end for further combining).
+- **÷**: always `larger ÷ smaller`, only valid when it divides evenly.
+- **^**: order matters (`a^b`), since `2^3 != 3^2`.
+- Every result must be a positive whole number and no larger than
+  1,000,000, or the move is rejected with a friendly error.
+
+`src/lib/mathSolver.js` also has `solveClosest()`, a memoized search over
+every reachable *set* of remaining numbers, used to (a) make sure a
+generated puzzle actually has a good solution, and (b) show "best possible"
+on the result screen next to your own result. It comfortably handles 6
+starting numbers in well under a second.
+
+Puzzle generation (`src/lib/mathPuzzle.js`) has three number-range presets
+(`small` 1-10, `classic` a couple of Countdown-style large numbers mixed in,
+`big` up to 100), each with its own target range. Climb Mode walks through
+count 4 -> 5 -> 6 on `small`, then `classic`, then `big`.
+
+Score is a straight accuracy percentage: `100 - (|your answer - target| /
+target) * 100`, floored at 0, capped at 100 for an exact hit. The "best
+possible" shown on the result screen is informational (from the solver) and
+doesn't affect your score -- getting close counts, even if a cleverer path
+existed.
 
 ## Leaderboard (optional)
 
 1. Create a free Supabase project.
-2. In the SQL editor, run `supabase/schema.sql` from this repo.
-3. Copy `.env.example` to `.env.local` and fill in your project URL and anon
-   key (Project Settings -> API in Supabase).
+2. In the SQL editor, run `supabase/schema.sql`, then
+   `supabase/002_add_math_game.sql` (adds Number Ladder support to the same
+   table).
+3. Copy `.env.example` to `.env.local` and fill in your project URL and
+   publishable/anon key (Project Settings -> API in Supabase).
 4. Restart `npm run dev`.
 
 Without those two env vars set, the game runs fine -- the leaderboard UI
 just shows a short "not connected" note and score-saving is skipped.
 
-Note on abuse: the insert policy in `schema.sql` is open (no auth), which
-matches "no sign-up, just play." If spam becomes a problem, the cleanest fix
-is a Netlify Function that validates a round server-side (replay the moves
-against the dictionary) before writing to Supabase, rather than inserting
-straight from the client.
+Note on abuse: the insert policy is open (no auth), which matches "no
+sign-up, just play." If spam becomes a problem, the cleanest fix is a
+Netlify Function that validates a round server-side before writing to
+Supabase, rather than inserting straight from the client.
 
 ## Deploy to Netlify
 
@@ -91,11 +122,22 @@ straight from the client.
 
 ```
 src/
-  data/            dictionaries (JSON, per category/length) + loader
+  data/            word-ladder dictionaries (JSON, per category/length) + loader
   config/          category metadata (labels, locale, accent colors)
-  lib/             word-ladder graph algorithms, i18n strings, Supabase client
-  hooks/           useGameEngine -- all game state and transitions
-  components/      Home, GameScreen, ResultPanel, ClimbSummary, Leaderboard, ...
+  lib/
+    wordGraph.js       word-ladder adjacency/BFS/scoring
+    mathSolver.js       number-combination rules + closest-value solver
+    mathPuzzle.js        number puzzle generation (presets, target ranges)
+    i18n.js               EN/TR UI strings
+    supabaseClient.js       leaderboard read/write
+  hooks/
+    useGameEngine.js      Word Ladder game state and transitions
+    useMathGameEngine.js  Number Ladder game state and transitions
+  components/
+    Home, GameScreen, ResultPanel, ClimbSummary        (Word Ladder)
+    MathGameScreen, MathResultPanel, MathClimbSummary  (Number Ladder)
+    Leaderboard, Hero, SaveScoreForm                    (shared)
 supabase/
-  schema.sql       leaderboard table + RLS policies
+  schema.sql              leaderboard table + RLS policies (run first)
+  002_add_math_game.sql   adds Number Ladder columns (run second)
 ```

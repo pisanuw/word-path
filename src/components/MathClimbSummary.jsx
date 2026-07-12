@@ -1,6 +1,6 @@
 import SaveScoreForm from './SaveScoreForm'
 
-export default function ClimbSummary({ strings, category, climb, onGoHome, onOpenLeaderboard, onRestart }) {
+export default function MathClimbSummary({ strings, climb, onGoHome, onOpenLeaderboard, onRestart }) {
   return (
     <div className="result-screen container">
       <div className="score-ring" style={{ '--score': Math.min(100, climb.totalScore) }}>
@@ -11,24 +11,19 @@ export default function ClimbSummary({ strings, category, climb, onGoHome, onOpe
         {strings.rounds_won}: {climb.roundsWon}
       </p>
 
-      {category && (
-        <SaveScoreForm
-          strings={strings}
-          game="words"
-          categoryId={category.id}
-          wordLength={0}
-          mode="climb"
-          moves={climb.roundsWon}
-          shortestMoves={climb.roundsWon}
-          score={climb.totalScore}
-          startWord=""
-          endWord=""
-        />
-      )}
+      <SaveScoreForm
+        strings={strings}
+        game="numbers"
+        wordLength={0}
+        mode="climb"
+        moves={climb.roundsWon}
+        shortestMoves={climb.roundsWon}
+        score={climb.totalScore}
+      />
 
       <div className="result-actions">
         <button className="btn btn-primary" onClick={onRestart}>
-          {strings.climbMode}
+          {strings.numberLadder}
         </button>
         <button className="btn btn-ghost" onClick={onOpenLeaderboard}>
           {strings.leaderboard}
