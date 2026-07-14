@@ -47,19 +47,16 @@ export default function MathResultPanel({
         </div>
       )}
 
-      {puzzle.bestDistance > 0 && puzzle.bestDistance < distance && (
+      {distance > 0 && puzzle.bestExpr && (
         <div className="path-compare">
           <h4>{strings.bestPossible}</h4>
-          <p className="muted" style={{ fontSize: '0.9rem' }}>
-            {puzzle.bestValue} ({strings.offBy} {puzzle.bestDistance})
+          <p className="reveal-expr">
+            {puzzle.bestExpr === String(puzzle.bestValue)
+              ? puzzle.bestValue
+              : `${puzzle.bestExpr} = ${puzzle.bestValue}`}
           </p>
-        </div>
-      )}
-      {puzzle.bestDistance === 0 && distance > 0 && (
-        <div className="path-compare">
-          <h4>{strings.bestPossible}</h4>
-          <p className="muted" style={{ fontSize: '0.9rem' }}>
-            {strings.exact} ({puzzle.target})
+          <p className="muted" style={{ fontSize: '0.85rem' }}>
+            {puzzle.bestDistance === 0 ? strings.exact : `${strings.offBy} ${puzzle.bestDistance}`}
           </p>
         </div>
       )}
